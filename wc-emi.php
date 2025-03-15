@@ -13,6 +13,18 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+function restrict_plugin_to_allowed_domains() {
+    $allowed_domains = array('buyseetha.lk', 'seetha-holdings.local'); // Add your allowed domains here
+    $current_domain = str_replace('www.', '', $_SERVER['HTTP_HOST']);
+
+    if (!in_array($current_domain, $allowed_domains)) {
+        deactivate_plugins(plugin_basename(__FILE__)); // Deactivate the plugin
+        wp_die(__('This plugin is licensed only for specific domains.', 'your-text-domain'));
+    }
+}
+add_action('admin_init', 'restrict_plugin_to_allowed_domains');
+
+
 function wc_emi_plugin_init() {
     if (class_exists('WC_Payment_Gateway')) { // Ensure WooCommerce is loaded
         require_once plugin_dir_path(__FILE__) . 'includes/class-wc-emi-payment-gateway.php';
@@ -54,6 +66,7 @@ class WC_EMI_Calculator {
         if ($hook === 'toplevel_page_wc-emi-settings') {
             wp_enqueue_style('wc-emi-admin-css', plugin_dir_url(__FILE__) . 'assets/css/admin.css', [], '1.0.0');
             wp_enqueue_script('wc-emi-admin-js', plugin_dir_url(__FILE__) . 'assets/js/admin.js', ['jquery'], '1.0.0', true);
+            wp_enqueue_script('wc-emi-tab-js', plugin_dir_url(__FILE__) . 'assets/js/tab.js', ['jquery'], '1.0.0', true);
         }
     }
 

@@ -33,31 +33,58 @@ if (isset($_GET['edit_payment_plan'])) {
         <div class="tabs">
             <button class="tablinks" data-tab="Banks" id="defaultTab"><?php esc_html_e('Banks', 'wc-emi-calculator'); ?></button>
             <button class="tablinks" data-tab="PaymentPlans"><?php esc_html_e('Payment Plans', 'wc-emi-calculator'); ?></button>
+            <button class="tablinks" data-tab="CommercialBankIPG"><?php esc_html_e('Commercial Bank', 'wc-emi-calculator'); ?></button>
+            <button class="tablinks" data-tab="SampathBankIPG"><?php esc_html_e('Sampath Bank', 'wc-emi-calculator'); ?></button>
         </div>
 
         <!-- Banks Tab -->
         <div id="Banks" class="tabcontent">
             <h2><?php esc_html_e('Manage Banks', 'wc-emi-calculator'); ?></h2>
             <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" enctype="multipart/form-data">
+                
+                <div class="form-group">
                 <input type="hidden" name="action" value="save_bank">
                 <?php wp_nonce_field('save_bank_action', 'save_bank_nonce'); ?>
-                
+                </div>
+
                 <input type="hidden" name="bank_index" value="<?php echo esc_attr($_GET['edit_bank'] ?? ''); ?>">
 
+                <div class="form-group">
                 <label for="bank_name"><?php esc_html_e('Bank Name:', 'wc-emi-calculator'); ?></label>
                 <input type="text" name="bank_name" id="bank_name" value="<?php echo esc_attr($editing_bank['name'] ?? ''); ?>" required><br>
+                </div>
 
+                <div class="form-group">
                 <label for="bank_logo"><?php esc_html_e('Bank Logo:', 'wc-emi-calculator'); ?></label>
-                <div>
-                    <input type="hidden" name="bank_logo" id="bank_logo" value="<?php echo esc_url($editing_bank['logo'] ?? ''); ?>">
-                    <button type="button" id="upload_logo_button" class="button"><?php esc_html_e('Upload Image', 'wc-emi-calculator'); ?></button>
-                    <div id="logo_preview" style="margin-top: 10px;">
-                        <img src="<?php echo esc_url($editing_bank['logo'] ?? ''); ?>" alt="" style="max-width: 150px; max-height: 150px; <?php echo empty($editing_bank['logo']) ? 'display: none;' : ''; ?>">
+                    <div>
+                        <input type="hidden" name="bank_logo" id="bank_logo" value="<?php echo esc_url($editing_bank['logo'] ?? ''); ?>">
+                        <button type="button" id="upload_logo_button" class="button"><?php esc_html_e('Upload Image', 'wc-emi-calculator'); ?></button>
+                        <div id="logo_preview" style="margin-top: 10px;">
+                            <img src="<?php echo esc_url($editing_bank['logo'] ?? ''); ?>" alt="" style="max-width: 150px; max-height: 150px; <?php echo empty($editing_bank['logo']) ? 'display: none;' : ''; ?>">
+                        </div>
                     </div>
                 </div>
 
-                <label for="bank_note"><?php esc_html_e('Note (Optional):', 'wc-emi-calculator'); ?></label>
-                <textarea name="bank_note" id="bank_note"><?php echo esc_html($editing_bank['note'] ?? ''); ?></textarea><br>
+                <div class="form-group">
+                    <label for="bank_note"><?php esc_html_e('Note (Optional):', 'wc-emi-calculator'); ?></label>
+                    <?php
+                    $content = $editing_bank['note'] ?? ''; // Load existing note or empty
+                    $editor_id = 'bank_note'; // ID for the editor
+
+                    $settings = array(
+                        'textarea_name' => 'bank_note', // Name for form submission
+                        'media_buttons' => true, // Show media upload button
+                        'editor_height' => 200,
+                        'quicktags' => true, // Enable quicktags (HTML mode)
+                        'tinymce' => array(
+                            'toolbar1' => 'bold,italic,bullist,numlist,link,unlink,undo,redo',
+                            'toolbar2' => '', // Remove extra toolbar
+                        ),
+                    );
+
+                    wp_editor($content, $editor_id, $settings);
+                    ?>
+                </div>
 
                 <button type="submit" class="button button-primary">
                     <?php echo isset($_GET['edit_bank']) ? esc_html__('Update Bank', 'wc-emi-calculator') : esc_html__('Save Bank', 'wc-emi-calculator'); ?>
@@ -105,214 +132,160 @@ if (isset($_GET['edit_payment_plan'])) {
 
         <!-- Modal for Editing Bank -->
         <div id="editBankModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2><?php esc_html_e('Edit Bank', 'wc-emi-calculator'); ?></h2>
-        <form id="editBankForm" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-            <input type="hidden" name="action" value="save_bank">
-            <?php wp_nonce_field('save_bank_action', 'save_bank_nonce'); ?>
-            <input type="hidden" name="bank_index" id="bank_index">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2><?php esc_html_e('Edit Bank', 'wc-emi-calculator'); ?></h2>
+                <form id="editBankForm" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="save_bank">
+                    <?php wp_nonce_field('save_bank_action', 'save_bank_nonce'); ?>
+                    <input type="hidden" name="bank_index" id="bank_index">
 
-            <label for="bank_name"><?php esc_html_e('Bank Name:', 'wc-emi-calculator'); ?></label>
-            <input type="text" name="bank_name" id="modal_bank_name" required><br>
+                    <div class="form-group">
+                    <label for="bank_name"><?php esc_html_e('Bank Name:', 'wc-emi-calculator'); ?></label>
+                    <input type="text" name="bank_name" id="modal_bank_name" required>
+                    </div>
 
-            <label for="bank_logo"><?php esc_html_e('Bank Logo:', 'wc-emi-calculator'); ?></label>
-            <div>
-                <input type="hidden" name="bank_logo" id="modal_bank_logo">
-                <button type="button" id="modal_upload_logo_button" class="button"><?php esc_html_e('Upload Image', 'wc-emi-calculator'); ?></button>
-                <div id="modal_logo_preview" style="margin-top: 10px;">
-                    <img id="modal_logo_img" src="" alt="" style="max-width: 150px; max-height: 150px; display: none;">
-                </div>
+                    <div class="form-group">
+                    <label for="bank_logo"><?php esc_html_e('Bank Logo:', 'wc-emi-calculator'); ?></label>
+                        <div>
+                            <input type="hidden" name="bank_logo" id="modal_bank_logo">
+                            <button type="button" id="modal_upload_logo_button" class="button"><?php esc_html_e('Upload Image', 'wc-emi-calculator'); ?></button>
+                            <div id="modal_logo_preview" style="margin-top: 10px;">
+                                <img id="modal_logo_img" src="" alt="" style="max-width: 150px; max-height: 150px; display: none;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                    <label for="bank_note"><?php esc_html_e('Note (Optional):', 'wc-emi-calculator'); ?></label>
+                    <textarea name="bank_note" id="modal_bank_note"></textarea><br>
+                    </div>
+                    
+                    <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'wc-emi-calculator'); ?></button>
+                </form>
             </div>
-
-            <label for="bank_note"><?php esc_html_e('Note (Optional):', 'wc-emi-calculator'); ?></label>
-            <textarea name="bank_note" id="modal_bank_note"></textarea><br>
-
-            <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'wc-emi-calculator'); ?></button>
-        </form>
-    </div>
-</div>
+        </div>
 
 
         <!-- Payment Plans Tab -->
-        <div id="PaymentPlans" class="tabcontent">
-    <h2><?php esc_html_e('Manage Payment Plans', 'wc-emi-calculator'); ?></h2>
-    <div class="form-container">
-    <form method="post" action="http://seetha-holdings.local/wp-admin/admin-post.php">
-        <input type="hidden" name="action" value="save_payment_plan">
-        <input type="hidden" id="save_payment_plan_nonce" name="save_payment_plan_nonce" value="f76fe08683">
-        <input type="hidden" name="_wp_http_referer" value="/wp-admin/admin.php?page=wc-emi-settings">
-        <input type="hidden" name="plan_index" value="">
+        <div id="PaymentPlans" class="tabcontent" style="display: none;">
+            <h2><?php esc_html_e('Manage Payment Plans', 'wc-emi-calculator'); ?></h2>
+                <div class="form-container">
+                    <form method="post" action="http://seetha-holdings.local/wp-admin/admin-post.php?tab=PaymentPlans">
+                        <input type="hidden" name="action" value="save_payment_plan">
+                        <input type="hidden" id="save_payment_plan_nonce" name="save_payment_plan_nonce" value="f76fe08683">
+                        <input type="hidden" name="_wp_http_referer" value="/wp-admin/admin.php?page=wc-emi-settings">
+                        <input type="hidden" name="plan_index" value="">
 
-        <div class="form-group">
-            <label for="bank_id">Select Bank:</label>
-            <select name="bank_id" id="bank_id" required>
-                <option value="0">Sampath Bank</option>
-                <option value="1">Commercial Banks</option>
-                <option value="2">HNB</option>
-            </select>
+                        <div class="form-group">
+                            <label for="bank_id">Select Bank:</label>
+                            <select name="bank_id" id="modal_bank_id" required>
+                                <option value=""><?php esc_html_e('Select a Bank', 'wc-emi-calculator'); ?></option>
+                                <?php
+                                $banks = get_option('wc_emi_banks', []);
+                                foreach ($banks as $bank_id => $bank_data) {
+                                    echo "<option value='" . esc_attr($bank_id) . "'>" . esc_html($bank_data['name']) . "</option>";
+                                }
+                                ?>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="plan_name">Plan Name:</label>
+                            <input type="text" name="plan_name" id="plan_name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="duration">Duration (Months):</label>
+                            <input type="number" name="duration" id="duration" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Convenience Fee Type:</label>
+                            <div>
+                                <input type="radio" name="convenience_fee_type" value="percentage" id="fee_percentage">
+                                <label for="fee_percentage">Percentage</label>
+                                <input type="radio" name="convenience_fee_type" value="fixed" id="fee_fixed">
+                                <label for="fee_fixed">Fixed Amount</label>
+                            </div>
+                        </div>
+
+                        <div id="percentage_fee_field" class="form-group" style="display: none;">
+                            <label for="percentage">Convenience Fee (%):</label>
+                            <input type="number" step="0.01" name="percentage">
+                        </div>
+
+                        <div id="fixed_fee_field" class="form-group" style="display: none;">
+                            <label for="fee_fixed">Convenience Fee (Fixed Amount):</label>
+                            <input type="number" step="0.01" name="fee_fixed">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="plan_start_date">Start Date:</label>
+                            <input type="date" name="plan_start_date" id="plan_start_date" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="plan_end_date">End Date:</label>
+                            <input type="date" name="plan_end_date" id="plan_end_date" required>
+                        </div>
+
+                        <button type="submit">Save Payment Plan</button>
+                    </form>
+                </div>
+
+                <h3><?php esc_html_e('Existing Payment Plans', 'wc-emi-calculator'); ?></h3>
+                            <?php if (!empty($payment_plans)) : ?>
+                                <table class="wp-list-table widefat fixed striped table-view-list">
+                                    <thead>
+                                        <tr>
+                                            <th><?php esc_html_e('Bank', 'wc-emi-calculator'); ?></th>
+                                            <th><?php esc_html_e('Plan Name', 'wc-emi-calculator'); ?></th>
+                                            <th><?php esc_html_e('Duration (Months)', 'wc-emi-calculator'); ?></th>
+                                            <th><?php esc_html_e('Convenience Rate (%)', 'wc-emi-calculator'); ?></th>
+                                            <th><?php esc_html_e('Convenience Fixed Fee', 'wc-emi-calculator'); ?></th>
+                                            <th><?php esc_html_e('Start Date', 'wc-emi-calculator'); ?></th>
+                                            <th><?php esc_html_e('End Date', 'wc-emi-calculator'); ?></th>
+                                            <th><?php esc_html_e('Actions', 'wc-emi-calculator'); ?></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($payment_plans as $index => $plan) : ?>
+                                            <tr>
+                                                <td><?php echo esc_html($banks[$plan['bank_id']]['name'] ?? esc_html__('Unknown Bank', 'wc-emi-calculator')); ?></td>
+                                                <td><?php echo esc_html($plan['plan_name'] ?? esc_html__('Unnamed Plan', 'wc-emi-calculator')); ?></td>
+                                                <td><?php echo esc_html($plan['duration']); ?></td>
+                                                <td><?php echo esc_html(!empty($plan['percentage']) ? $plan['percentage'] : 'Fixed fee added'); ?></td>
+                                                <td><?php echo esc_html(!empty($plan['fee_fixed']) ? $plan['fee_fixed'] : 'Convenience Rate added'); ?></td>
+                                                <td><?php echo esc_html($plan['start_date']); ?></td>
+                                                <td><?php echo esc_html($plan['end_date']); ?></td>
+                                                <td>
+                                                    <button class="button open-edit-plan-modal" data-index="<?php echo esc_attr($index); ?>">
+                                                        <?php esc_html_e('Edit', 'wc-emi-calculator'); ?>
+                                                    </button>
+                                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
+                                                        <input type="hidden" name="action" value="delete_payment_plan">
+                                                        <input type="hidden" name="plan_index" value="<?php echo esc_attr($index); ?>">
+                                                        <?php wp_nonce_field('delete_plan_action', 'delete_plan_nonce'); ?>
+                                                        <button type="submit" class="button button-danger"><?php esc_html_e('Delete', 'wc-emi-calculator'); ?></button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            <?php else : ?>
+                                <p><?php esc_html_e('No payment plans available.', 'wc-emi-calculator'); ?></p>
+                            <?php endif; ?>
         </div>
-
-        <div class="form-group">
-            <label for="plan_name">Plan Name:</label>
-            <input type="text" name="plan_name" id="plan_name" required>
+        <div id="CommercialBankIPG" class="tabcontent" style="display: none;">
+            <h2><?php esc_html_e('Commercial Bank IPG', 'wc-emi-calculator'); ?></h2>
+           <p>Coming Soon</p>
         </div>
-
-        <div class="form-group">
-            <label for="duration">Duration (Months):</label>
-            <input type="number" name="duration" id="duration" required>
+        <div id="SampathBankIPG" class="tabcontent" style="display: none;">
+            <h2><?php esc_html_e('Sampath Bank IPG', 'wc-emi-calculator'); ?></h2>
+            <p>Coming Soon</p>
         </div>
-
-        <div class="form-group">
-            <label>Convenience Fee Type:</label>
-            <div>
-                <input type="radio" name="convenience_fee_type" value="percentage" id="fee_percentage">
-                <label for="fee_percentage">Percentage</label>
-                <input type="radio" name="convenience_fee_type" value="fixed" id="fee_fixed">
-                <label for="fee_fixed">Fixed Amount</label>
-            </div>
-        </div>
-
-        <div id="percentage_fee_field" class="form-group" style="display: none;">
-            <label for="percentage">Convenience Fee (%):</label>
-            <input type="number" step="0.01" name="percentage">
-        </div>
-
-        <div id="fixed_fee_field" class="form-group" style="display: none;">
-            <label for="fee_fixed">Convenience Fee (Fixed Amount):</label>
-            <input type="number" step="0.01" name="fee_fixed">
-        </div>
-
-        <div class="form-group">
-            <label for="plan_start_date">Start Date:</label>
-            <input type="date" name="plan_start_date" id="plan_start_date" required>
-        </div>
-
-        <div class="form-group">
-            <label for="plan_end_date">End Date:</label>
-            <input type="date" name="plan_end_date" id="plan_end_date" required>
-        </div>
-
-        <button type="submit">Save Payment Plan</button>
-    </form>
-</div>
-
-    <h3><?php esc_html_e('Existing Payment Plans', 'wc-emi-calculator'); ?></h3>
-            <?php if (!empty($payment_plans)) : ?>
-                <table class="wp-list-table widefat fixed striped table-view-list">
-                    <thead>
-                        <tr>
-                            <th><?php esc_html_e('Bank', 'wc-emi-calculator'); ?></th>
-                            <th><?php esc_html_e('Plan Name', 'wc-emi-calculator'); ?></th>
-                            <th><?php esc_html_e('Duration (Months)', 'wc-emi-calculator'); ?></th>
-                            <th><?php esc_html_e('Convenience Rate (%)', 'wc-emi-calculator'); ?></th>
-                            <th><?php esc_html_e('Convenience Fixed Fee', 'wc-emi-calculator'); ?></th>
-                            <th><?php esc_html_e('Start Date', 'wc-emi-calculator'); ?></th>
-                            <th><?php esc_html_e('End Date', 'wc-emi-calculator'); ?></th>
-                            <th><?php esc_html_e('Actions', 'wc-emi-calculator'); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($payment_plans as $index => $plan) : ?>
-                            <tr>
-                                <td><?php echo esc_html($banks[$plan['bank_id']]['name'] ?? esc_html__('Unknown Bank', 'wc-emi-calculator')); ?></td>
-                                <td><?php echo esc_html($plan['plan_name'] ?? esc_html__('Unnamed Plan', 'wc-emi-calculator')); ?></td>
-                                <td><?php echo esc_html($plan['duration']); ?></td>
-                                <td><?php echo esc_html(!empty($plan['percentage']) ? $plan['percentage'] : 'Fixed fee added'); ?></td>
-                                <td><?php echo esc_html(!empty($plan['fee_fixed']) ? $plan['fee_fixed'] : 'Convenience Rate added'); ?></td>
-                                <td><?php echo esc_html($plan['start_date']); ?></td>
-                                <td><?php echo esc_html($plan['end_date']); ?></td>
-                                <td>
-                                    <button class="button open-edit-plan-modal" data-index="<?php echo esc_attr($index); ?>">
-                                        <?php esc_html_e('Edit', 'wc-emi-calculator'); ?>
-                                    </button>
-                                    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" style="display:inline;">
-                                        <input type="hidden" name="action" value="delete_payment_plan">
-                                        <input type="hidden" name="plan_index" value="<?php echo esc_attr($index); ?>">
-                                        <?php wp_nonce_field('delete_plan_action', 'delete_plan_nonce'); ?>
-                                        <button type="submit" class="button button-danger"><?php esc_html_e('Delete', 'wc-emi-calculator'); ?></button>
-                                    </form>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php else : ?>
-                <p><?php esc_html_e('No payment plans available.', 'wc-emi-calculator'); ?></p>
-            <?php endif; ?>
-</div>
-    </div>
-</div>
-
-<!-- Modal for Editing Payment Plan -->
-<div id="editPlanModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h2><?php esc_html_e('Edit Payment Plan', 'wc-emi-calculator'); ?></h2>
-        
-        <form id="editPlanForm" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
-            <input type="hidden" name="action" value="save_payment_plan">
-            <?php wp_nonce_field('save_payment_plan_action', 'save_payment_plan_nonce'); ?>
-            <input type="hidden" name="plan_index" id="plan_index">
-
-            <div class="form-group">
-            <label for="bank_id"><?php esc_html_e('Bank:', 'wc-emi-calculator'); ?></label>
-            <select name="bank_id" id="modal_bank_id" required>
-                <option value=""><?php esc_html_e('Select a Bank', 'wc-emi-calculator'); ?></option>
-                <?php
-                $banks = get_option('wc_emi_banks', []);
-                foreach ($banks as $bank_id => $bank_data) {
-                    echo "<option value='" . esc_attr($bank_id) . "'>" . esc_html($bank_data['name']) . "</option>";
-                }
-                ?>
-            </select>
-            </div>
-
-            <div class="form-group">
-            <label for="plan_name"><?php esc_html_e('Plan Name:', 'wc-emi-calculator'); ?></label>
-            <input type="text" name="plan_name" id="modal_plan_name" required><br>
-            </div>
-
-            <div class="form-group">
-            <label for="duration"><?php esc_html_e('Duration (Months):', 'wc-emi-calculator'); ?></label>
-            <input type="number" name="duration" id="duration" required><br>
-            </div>
-
-            <div class="form-group">
-                <label><?php esc_html_e('Convenience Fee Type:', 'wc-emi-calculator'); ?></label>
-                    <div>
-                        <input type="radio" name="convenience_fee_type_modal" value="percentage_modal" id="fee_percentage_modal" <?php checked($editing_plan['convenience_fee_type'] ?? '', 'percentage'); ?>>
-                        <label for="fee_percentage">Percentage</label>
-                        <input type="radio" name="convenience_fee_type_modal" value="fixed_modal" id="fee_fixed_modal" <?php checked($editing_plan['convenience_fee_type'] ?? '', 'fixed'); ?>>
-                        <label for="fee_fixed">Fixed Amount</label>
-                    </div>
-            </div>
-            <div id="percentage_fee_field_modal" class="form-group" style="display: none;">
-                <label for="percentage">Convenience Fee (%):</label>
-                <input type="number" step="0.01" name="percentage" value="<?php echo esc_attr($editing_plan['percentage'] ?? ''); ?>">
-            </div>
-            
-            <div id="fixed_fee_field_modal" class="form-group" style="display: none;">
-                <label for="fee_fixed">Convenience Fee (Fixed Amount):</label>
-                <input type="number" step="0.01" name="fee_fixed" value="<?php echo esc_attr($editing_plan['fee_fixed'] ?? ''); ?>">
-            </div><br>
-
-            <div class="form-group">
-            <label for="plan_start_date"><?php esc_html_e('Start Date', 'wc-emi-calculator'); ?></label>
-            <input type="date" name="plan_start_date" id="modal_start_date" required><br>
-            </div>
-
-            <div class="form-group">
-            <label for="plan_end_date"><?php esc_html_e('End Date', 'wc-emi-calculator'); ?></label>
-            <input type="date" name="plan_end_date" id="modal_end_date" required><br>
-            </div>
-
-            <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'wc-emi-calculator'); ?></button>
-        </form>
-
-
-    </div>
-</div>
 
 <script>
     jQuery(document).ready(function($) {
