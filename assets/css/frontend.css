@@ -1,0 +1,104 @@
+/* frontend.css */
+/* Mobile stylings */
+
+@media (max-width: 768px) {
+  .emi-popup {
+        width: 90% !important;
+    }
+    .emi-popup-header img {
+    max-width: 100px !important; /* Ensures the image doesn’t exceed this width */
+}
+th.emi-heading {
+    font-size: 12px;
+}
+.emi-popup td {
+    font-size: 13px;
+}
+}
+
+/* End of Mobile Stylings */
+#woocommerce-emi-options {
+    font-family: Arial, sans-serif;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.emi-option {
+    display: inline-block;
+    text-align: center;
+    margin-right: 10px;
+}
+
+.emi-option img {
+    max-width: 50px;
+    margin-bottom: 5px;
+}
+.emi-popup-header {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%; /* Ensure the container is wide enough */
+    padding: 10px; /* Optional: Adds space around */
+    box-sizing: border-box;
+}
+
+.emi-popup-footer {
+    display: flex;
+    justify-content: flex-end;
+}
+.emi-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 35%;
+    height: fit-content;
+    overflow-y: auto;
+    max-width: 90%;
+    z-index: 1000;
+}
+
+.emi-popup-header img {
+    width: 250px; /* Ensures the image doesn’t exceed this width */
+    height: auto !important; /* Maintains aspect ratio */
+    object-fit: contain !important; /* Ensures the full image is visible */
+}
+
+.emi-popup table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.emi-popup th, .emi-popup td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.emi-popup th {
+    background: #f4f4f4;
+}
+
+.emi-popup-close {
+    display: block;
+    margin-top: 15px;
+    padding: 10px;
+    background: #0073aa;
+    color: white;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    border-radius: 10px;
+    min-width: 100px;
+}
+
+.emi-popup-close:hover {
+    background: #005177;
+}

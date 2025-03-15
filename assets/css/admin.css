@@ -1,0 +1,121 @@
+/* admin.css */
+.form-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .form-group label {
+        width: 200px; /* Adjust label width as needed */
+        text-align: right;
+        margin-right: 10px;
+        font-weight: bold;
+    }
+    
+    .form-group input,
+    .form-group select {
+        flex: 1; /* Takes remaining space */
+        padding: 5px;
+        font-size: 14px;
+    }
+
+    .form-group div {
+        flex: 1;
+    }
+    
+    .form-container {
+         /* Adjust form width as needed */
+        margin: auto;
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-container button {
+        display: block;
+        width: 15%;
+        padding: 10px;
+        background: #0073aa;
+        color: white;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+        border-radius: 4px;
+        float: right;  
+    }
+    
+    .form-container button:hover {
+        background: #005d88;
+    }
+#emi-admin {
+    font-family: Arial, sans-serif;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.tablinks {
+    background-color: #f1f1f1;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 5px;
+    border-radius: 5px;
+}
+
+.tablinks.active, .tablinks:hover {
+    background-color: #0073aa;
+    color: #fff;
+}
+
+.tabcontent {
+    display: none;
+    background-color: #fff;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+#banks-list, #payment-plans-list {
+    margin-top: 20px;
+}
+
+
+/* Show active tab */
+.tabcontent {
+    display: none;
+}
+
+.tabcontent.active {
+    display: block;
+}
+
+/* Adjust styles for tabs */
+.tablinks {
+    background-color: #f1f1f1;
+    border: 1px solid #ccc;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+    margin-right: 5px;
+    transition: background-color 0.3s;
+}
+
+.tablinks.active, .tablinks:hover {
+    background-color: #0073aa;
+    color: #fff;
+}
+
+/* Tab content styling */
+#emi-admin .tabcontent {
+    margin-top: 15px;
+    border: 1px solid #ddd;
+    padding: 15px;
+    border-radius: 5px;
+    background-color: #fff;
+}
