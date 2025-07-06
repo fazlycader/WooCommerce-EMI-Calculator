@@ -228,7 +228,49 @@ function save_bank_handler() {
         $bank_plans[$plan['bank_id']][] = $plan;
     }
 
+
+        $current_date = date('Y-m-d');
+$price = $product->get_price();
+$banks = get_option('wc_emi_banks', []);
+$plans = get_option('wc_emi_payment_plans', []);
+
+if (empty($plans)) return;
+
+// Group plans by bank
+$bank_plans = [];
+foreach ($plans as $plan) {
+    if (!isset($bank_plans[$plan['bank_id']])) {
+        $bank_plans[$plan['bank_id']] = [];
+    }
+    $bank_plans[$plan['bank_id']][] = $plan;
+}
+
+// 🔍 Calculate global minimum EMI across all valid plans
+$global_min_emi = null;
+foreach ($plans as $plan) {
+    if ($current_date < $plan['start_date'] || $current_date > $plan['end_date']) continue;
+
+    if ($plan['percentage'] > 0) {
+        $emi = ($price + ($price * $plan['percentage'] / 100)) / $plan['duration'];
+    } elseif ($plan['fee_fixed'] > 0) {
+        $emi = ($price + $plan['fee_fixed']) / $plan['duration'];
+    } else {
+        $emi = $price / $plan['duration'];
+    }
+
+    if ($global_min_emi === null || $emi < $global_min_emi) {
+        $global_min_emi = $emi;
+    }
+}
+
     echo '<div id="woocommerce-emi-options" style="margin-top: 15px;">';
+
+if ($global_min_emi !== null) {
+    echo '<p class="wc-emi-global-minimum" style="margin-bottom: 10px;">';
+    echo 'EMI plans from ' . wc_price($global_min_emi);
+    echo '</p>';
+}
+
     
     foreach ($bank_plans as $bank_id => $bank_plan_list) {
         $bank = $banks[$bank_id] ?? null;
@@ -243,8 +285,8 @@ function save_bank_handler() {
 
         echo '<div class="emi-option" style="display: inline-block; margin-right: 15px;">';
         echo '<a href="#" class="emi-popup-trigger" data-bank-id="' . esc_attr($bank_id) . '">';
-        echo '<img src="' . esc_url($logo_url) . '" alt="' . $bank_name . '" style="width: 50px; height: auto;">';
-        echo '<div>' . $bank_name . '</div>';
+        echo '<img src="' . esc_url($logo_url) . '" alt="' . $bank_name . '" style="width: 100px; height: 35px;">';
+        // echo '<div>' . $bank_name . '</div>';
         echo '</a>';
         echo '</div>';
 
@@ -300,6 +342,55 @@ function save_bank_handler() {
 
 }
 
+add_action('woocommerce_cart_calculate_fees', 'wc_emi_apply_sampath_fee_based_on_payment', 20, 1);
+
+function wc_emi_apply_sampath_fee_based_on_payment($cart) {
+    if (is_admin() && !defined('DOING_AJAX')) return;
+
+    // Get selected payment method
+    $chosen_gateway = WC()->session->get('chosen_payment_method');
+
+    if (!$chosen_gateway || !preg_match('/^sampathipgpromo_(\d+)$/', $chosen_gateway, $matches)) {
+        return; // No promo fee needed for sampathipg or unrelated methods
+    }
+
+    $duration = intval($matches[1]); // e.g. 3, 6, 12, 24
+    $payment_plans = get_option('wc_emi_payment_plans', []);
+    $banks = get_option('wc_emi_banks', []);
+
+    // Find Sampath Bank's ID
+    $sampath_bank_id = null;
+    foreach ($banks as $id => $bank) {
+        if (strtolower($bank['name']) === 'sampath bank') {
+            $sampath_bank_id = $id;
+            break;
+        }
+    }
+
+    if (is_null($sampath_bank_id)) return;
+
+    // Find matching EMI plan for the duration
+    foreach ($payment_plans as $plan) {
+        if ($plan['bank_id'] == $sampath_bank_id && intval($plan['duration']) === $duration) {
+            $fee_label = sprintf(__('Sampath Bank %dM EMI Convenience Fee', 'wc-emi-calculator'), $duration);
+            $fee_amount = 0;
+
+            if (!empty($plan['percentage']) && floatval($plan['percentage']) > 0) {
+                $fee_amount = ($cart->subtotal * floatval($plan['percentage'])) / 100;
+            } elseif (!empty($plan['fee_fixed']) && floatval($plan['fee_fixed']) > 0) {
+                $fee_amount = floatval($plan['fee_fixed']);
+            }
+
+            if ($fee_amount > 0) {
+                $cart->add_fee($fee_label, $fee_amount, true);
+            }
+
+            break; // Stop after applying the first matching plan
+        }
+    }
+}
+
+
 function wc_emi_enqueue_admin_scripts($hook) {
     // Load only on the plugin's admin page
     if ($hook !== 'toplevel_page_wc-emi-settings') {
@@ -314,8 +405,9 @@ add_action('admin_enqueue_scripts', 'wc_emi_enqueue_admin_scripts');
 
 add_action('admin_post_save_payment_plan', function () {
     if (!isset($_POST['save_payment_plan_nonce']) || !wp_verify_nonce($_POST['save_payment_plan_nonce'], 'save_payment_plan_action')) {
-        wp_die(__('Nonce verification failed', 'wc-emi-calculator'));
-    }
+    wp_die(__('Nonce verification failed', 'wc-emi-calculator'));
+}
+
 
     // Debugging: Log form data to check for missing fields
     error_log(print_r($_POST, true));
@@ -356,7 +448,7 @@ add_action('admin_post_save_payment_plan', function () {
 
     update_option('wc_emi_payment_plans', $payment_plans);
 
-    wp_redirect(admin_url('admin.php?page=wc-emi-settings'));
+    wp_redirect(admin_url('admin.php?page=wc-emi-settings&tab=PaymentPlans'));
     exit;
 });
 

@@ -171,9 +171,10 @@ if (isset($_GET['edit_payment_plan'])) {
         <div id="PaymentPlans" class="tabcontent" style="display: none;">
             <h2><?php esc_html_e('Manage Payment Plans', 'wc-emi-calculator'); ?></h2>
                 <div class="form-container">
-                    <form method="post" action="http://seetha-holdings.local/wp-admin/admin-post.php?tab=PaymentPlans">
+                    
+                        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
                         <input type="hidden" name="action" value="save_payment_plan">
-                        <input type="hidden" id="save_payment_plan_nonce" name="save_payment_plan_nonce" value="f76fe08683">
+                    <?php wp_nonce_field('save_payment_plan_action', 'save_payment_plan_nonce'); ?>
                         <input type="hidden" name="_wp_http_referer" value="/wp-admin/admin.php?page=wc-emi-settings">
                         <input type="hidden" name="plan_index" value="">
 
@@ -286,6 +287,62 @@ if (isset($_GET['edit_payment_plan'])) {
             <h2><?php esc_html_e('Sampath Bank IPG', 'wc-emi-calculator'); ?></h2>
             <p>Coming Soon</p>
         </div>
+
+<!-- Modal for Editing Payment Plan -->
+<div id="editPlanModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2><?php esc_html_e('Edit Payment Plan', 'wc-emi-calculator'); ?></h2>
+        <form id="editPlanForm" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="save_payment_plan">
+            <?php wp_nonce_field('save_payment_plan_action', 'save_payment_plan_nonce'); ?>
+            <input type="hidden" name="plan_index" id="plan_index">
+
+            <label for="bank_id"><?php esc_html_e('Bank:', 'wc-emi-calculator'); ?></label>
+            <select name="bank_id" id="modal_bank_id" required>
+                <option value=""><?php esc_html_e('Select a Bank', 'wc-emi-calculator'); ?></option>
+                <?php
+                $banks = get_option('wc_emi_banks', []);
+                foreach ($banks as $bank_id => $bank_name) {
+                    echo "<option value='" . esc_attr($bank_id) . "'>" . esc_html($bank_name) . "</option>";
+                }
+                ?>
+            </select><br>
+
+            <label for="plan_name"><?php esc_html_e('Plan Name:', 'wc-emi-calculator'); ?></label>
+            <input type="text" name="plan_name" id="modal_plan_name" required><br>
+
+            <label for="duration"><?php esc_html_e('Duration (Months):', 'wc-emi-calculator'); ?></label>
+            <input type="number" name="duration" id="duration" required><br>
+
+            <label><?php esc_html_e('Convenience Fee Type:', 'wc-emi-calculator'); ?></label><br>
+            <input type="radio" name="convenience_fee_type" value="percentage" id="fee_percentage" <?php checked($editing_plan['convenience_fee_type'] ?? '', 'percentage'); ?>>
+            <label for="fee_percentage">Percentage</label>
+            <input type="radio" name="convenience_fee_type" value="fixed" id="fee_fixed" <?php checked($editing_plan['convenience_fee_type'] ?? '', 'fixed'); ?>>
+            <label for="fee_fixed">Fixed Amount</label><br>
+
+            <div id="percentage_fee_field" style="display: none;">
+                <label for="percentage">Convenience Fee (%):</label>
+                <input type="number" step="0.01" name="percentage" value="<?php echo esc_attr($editing_plan['percentage'] ?? ''); ?>">%
+            </div>
+            
+            <div id="fixed_fee_field" style="display: none;">
+                <label for="fee_fixed">Convenience Fee (Fixed Amount):</label>
+                <input type="number" step="0.01" name="fee_fixed" value="<?php echo esc_attr($editing_plan['fee_fixed'] ?? ''); ?>">
+            </div><br>
+
+            <label for="plan_start_date"><?php esc_html_e('Start Date', 'wc-emi-calculator'); ?></label>
+            <input type="date" name="plan_start_date" id="modal_start_date" required><br>
+
+            <label for="plan_end_date"><?php esc_html_e('End Date', 'wc-emi-calculator'); ?></label>
+            <input type="date" name="plan_end_date" id="modal_end_date" required><br>
+
+            <button type="submit" class="button button-primary"><?php esc_html_e('Save Changes', 'wc-emi-calculator'); ?></button>
+        </form>
+
+
+    </div>
+</div>
 
 <script>
     jQuery(document).ready(function($) {
@@ -426,72 +483,78 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
     const modal = document.getElementById('editPlanModal');
+    if (!modal) {
+        console.error('Edit plan modal not found!');
+        return;
+    }
+
     const closeBtn = modal.querySelector('.close');
-    const editButtons = document.querySelectorAll('.open-edit-plan-modal');
     const form = modal.querySelector('#editPlanForm');
 
-    editButtons.forEach(button => {
-        button.addEventListener('click', function () {
-            const index = this.getAttribute('data-index'); // Get plan index from button attribute
-            const planData = <?php echo json_encode(get_option('wc_emi_payment_plans', [])); ?>;
+    function openEditModal(event) {
+        event.preventDefault();
+        const index = this.getAttribute('data-index'); // Get plan index from button
+        const planData = <?php echo json_encode(get_option('wc_emi_payment_plans', [])); ?>;
 
-            if (index !== null && index !== "") {
-                const plan = planData[index];
+        if (index !== null && index !== "" && planData[index]) {
+            const plan = planData[index];
 
-                form.plan_index.value = index;  // Set plan index
-                form.modal_bank_id.value = plan.bank_id;
-                form.modal_plan_name.value = plan.plan_name;
-                form.duration.value = plan.duration;
-                form.percentage.value = plan.percentage;
-                form.fee_fixed.value = plan.fee_fixed;
-                form.modal_start_date.value = plan.start_date;
-                form.modal_end_date.value = plan.end_date;
-            } else {
-                form.plan_index.value = ""; // Ensure it's empty for new plans
-                form.modal_bank_id.value = "";
-                form.modal_plan_name.value = "";
-                form.duration.value = "";
-                form.percentage.value = "";
-                form.fee_fixed.value = "";
-                form.modal_start_date.value = "";
-                form.modal_end_date.value = "";
-            }
+            form.plan_index.value = index;  // Set plan index
+            form.modal_bank_id.value = plan.bank_id;
+            form.modal_plan_name.value = plan.plan_name;
+            form.duration.value = plan.duration;
+            form.percentage.value = plan.percentage ?? ''; // Handle null values
+            form.fee_fixed.value = plan.fee_fixed ?? '';
+            form.modal_start_date.value = plan.start_date;
+            form.modal_end_date.value = plan.end_date;
+        } else {
+            form.reset(); // Clear the form for new plan entry
+        }
 
-            modal.style.display = 'block';
-        });
-    });
-   
+        modal.style.display = 'block';
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
     function toggleFeeFields() {
         let selectedType = document.querySelector('input[name="convenience_fee_type"]:checked');
         document.getElementById('percentage_fee_field').style.display = (selectedType && selectedType.value === 'percentage') ? 'flex' : 'none';
         document.getElementById('fixed_fee_field').style.display = (selectedType && selectedType.value === 'fixed') ? 'flex' : 'none';
     }
-    document.querySelectorAll('input[name="convenience_fee_type"]').forEach(el => {
-        el.addEventListener('change', toggleFeeFields);
-    });
-    toggleFeeFields(); // Initialize on page load
 
-
-    closeBtn.addEventListener('click', function () {
-        modal.style.display = 'none';
-    });
-
-    window.addEventListener('click', function (event) {
-        if (event.target === modal) {
-            modal.style.display = 'none';
+    // Attach event listener to dynamically created buttons
+    document.addEventListener('click', function (event) {
+        if (event.target.classList.contains('open-edit-plan-modal')) {
+            openEditModal.call(event.target, event);
         }
     });
 
-    // Ensure form submission includes the correct plan_index
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeModal);
+    }
+
+    window.addEventListener('click', function (event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    document.querySelectorAll('input[name="convenience_fee_type"]').forEach(el => {
+        el.addEventListener('change', toggleFeeFields);
+    });
+    
+    toggleFeeFields(); // Initialize on page load
+
     form.addEventListener('submit', function () {
         if (!form.plan_index.value) {
             form.plan_index.value = ""; // Ensure empty string instead of null
         }
     });
 });
-
 </script>
 
 
